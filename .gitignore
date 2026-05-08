@@ -1,0 +1,4 @@
+/generate_word_list/ngram_cache
+/generate_word_list/top_words.txt
+/generate_word_list/word_list.rs
+/target
