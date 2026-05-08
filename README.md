@@ -1,6 +1,6 @@
 # QWENCH
 
-![image info](./img/smile.png)
+![image info](./img/play.png)
 
 
 ### Install from source (recommended for Rust users)

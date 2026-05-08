@@ -44,3 +44,5 @@ noted some interesting behavior with cargo build.
 if you pass the --message-format short flag,
 cargo remembers that and persists it for all build runs where the code does not recompile.
 
+~/.cargo/bin/dist init
+~/.cargo/bin/dist build
