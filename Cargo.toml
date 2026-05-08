@@ -1,7 +1,18 @@
 [package]
 name = "qwench"
-version = "0.1.0"
+version = "1.0.1"
+authors = ["BitPusher16"]
 edition = "2024"
+description = "A terminal-based typing game built on crossterm."
+repository = "https://github.com/BitPusher16/qwench"
+license = "MIT"
+readme = "README.md"
+keywords = ["game", "typing", "tui", "terminal"]
+categories = ["command-line-utilities", "games"]
+
+[[bin]]
+name = "qwench"
+path = "src/main.rs"
 
 [dependencies]
 crossterm = "0.29.0"
@@ -12,3 +23,12 @@ panic = 'abort'
 
 [profile.release]
 panic = 'abort'
+
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"
+
+
+
+

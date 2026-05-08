@@ -15,7 +15,10 @@
 
 #RUSTFLAGS="-Awarnings" cargo build --bin qwench && alacritty -e bash -c "RUST_BACKTRACE=full ./target/debug/qwench; read -n 1 -s -r -p \"Press any key to continue...\""
 
-RUSTFLAGS="-Awarnings" cargo build --bin qwench && alacritty -e bash -c "./target/debug/qwench; read -n 1 -s -r -p \"Press any key to continue...\""
+echo "foo"
+
+#RUSTFLAGS="-Awarnings" cargo build --bin qwench && alacritty -e bash -c "./target/debug/qwench; read -n 1 -s -r -p \"Press any key to continue...\""
+RUSTFLAGS="-Awarnings" cargo build --bin qwench && alacritty -e bash -c "./target/debug/qwench"
 
 
 
