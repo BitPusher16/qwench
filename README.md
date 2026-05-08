@@ -32,6 +32,7 @@ Go to the [latest release](https://github.com/BitPusher16/qwench/releases/latest
 
 ### Command Line Args
 
+```bash
 $ ./qwench -h
 QWENCH - Terminal typing game
 
@@ -48,4 +49,5 @@ Options:
 
 Example:
   qwench --chars-per-minute 400 --game-length-sec 240 --letter-multiple 4 --symbol-multiple 3
+```
 
