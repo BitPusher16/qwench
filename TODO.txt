@@ -46,3 +46,6 @@ cargo remembers that and persists it for all build runs where the code does not 
 
 ~/.cargo/bin/dist init
 ~/.cargo/bin/dist build
+
+git tag v1.0.3
+git push --tags
