@@ -1,6 +1,6 @@
 [package]
 name = "qwench"
-version = "1.0.3"
+version = "1.0.4"
 authors = ["BitPusher16"]
 edition = "2024"
 description = "A terminal-based typing game built on crossterm."
