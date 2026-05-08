@@ -132,6 +132,8 @@ impl CommandLineArgs{
     fn print_help() {
         println!("QWENCH - Terminal typing game");
         println!();
+        println!("Esc to quit.");
+        println!();
         println!("Set letter-multiple and symbol-multiple to adjust the ratio of symbols to letters.");
         println!();
         println!("Usage: qwench [OPTIONS]");

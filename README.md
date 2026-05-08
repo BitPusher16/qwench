@@ -36,6 +36,8 @@ Go to the [latest release](https://github.com/BitPusher16/qwench/releases/latest
 $ ./qwench -h
 QWENCH - Terminal typing game
 
+Esc to quit.
+
 Set letter-multiple and symbol-multiple to adjust the ratio of symbols to letters.
 
 Usage: qwench [OPTIONS]
