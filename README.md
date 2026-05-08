@@ -32,7 +32,7 @@ Go to the [latest release](https://github.com/BitPusher16/qwench/releases/latest
 
 ### Command Line Args
 
-```bash
+```
 $ ./qwench -h
 QWENCH - Terminal typing game
 
