@@ -4,7 +4,16 @@
 
 ## Installation
 
-### Clone and build (assumes Rust Cargo is installed)
+### Clone and build without install (assumes Rust Cargo is installed)
+
+```bash
+git clone https://github.com/BitPusher16/qwench.git
+cd qwench
+cargo build --release
+cp ./target/release/qwench .
+```
+
+### Clone, build, and install (assumes Rust Cargo is installed)
 
 ```bash
 git clone https://github.com/BitPusher16/qwench.git
@@ -12,7 +21,7 @@ cd qwench
 cargo install --path .
 ```
 
-### Build without clone (assumes Rust Cargo is installed)
+### Build and install without clone (assumes Rust Cargo is installed)
 ```bash
 cargo install --git https://github.com/BitPusher16/qwench.git
 ```
