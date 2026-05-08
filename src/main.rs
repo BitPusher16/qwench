@@ -989,7 +989,7 @@ impl Game{
                 self.letters_printed as f64 / (self.symbols_printed as f64 + 0.001);
             let desired_letter_to_symbol_ratio = 
                 self.letter_multiple as f64 / (self.symbol_multiple as f64 + 0.001);
-            self.debug_vec.push(format!("{desired_letter_to_symbol_ratio}"));
+            //self.debug_vec.push(format!("{desired_letter_to_symbol_ratio}"));
 
             if current_letter_to_symbol_ratio < desired_letter_to_symbol_ratio {
                 self.letters_printed += self.place_cloud(false);

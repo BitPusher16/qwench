@@ -7,7 +7,7 @@ pub struct CommandLineArgs {
 }
 
 impl CommandLineArgs {
-    const CHARS_PER_MIN_DEF: u64 = 200;
+    const CHARS_PER_MIN_DEF: u64 = 400;
     const CHARS_PER_MIN_MIN: u64 = 100;
     const CHARS_PER_MIN_MAX: u64 = 2000;
 
