@@ -30,7 +30,7 @@ cargo install --git https://github.com/BitPusher16/qwench.git
 
 Go to the [latest release](https://github.com/BitPusher16/qwench/releases/latest) and download the binary for your OS.
 
-### Command Line Args
+## Command Line Args
 
 ```
 $ ./qwench -h
