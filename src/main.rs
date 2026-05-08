@@ -29,8 +29,11 @@ use crate::symbol_list::get_symbol_list;
 mod word_list;
 use crate::word_list::get_word_list;
 
-const MIN_COLS: usize = 144;
-const MIN_ROWS: usize = 48;
+mod args;
+use crate::args::{CommandLineArgs, parse_args};
+
+const GAME_COLS: usize = 144;
+const GAME_ROWS: usize = 48;
 
 const MAX_WORD_LEN: usize = 10;
 const MIN_WORD_LEN: usize = 6;
@@ -41,12 +44,13 @@ const MAX_SYMBOLS_LEN: usize = 6;
 const MIN_SYMBOLS_LEN: usize = 4;
 
 const MS_PER_TICK: u64 = 250;
-const GAME_LENGTH_SEC: u64 = 2 * 60;
+//const GAME_LENGTH_SEC: u64 = 2 * 60;
 
 // at or above hydration level WATERLOGGED,
 // fire does not affect fire_risk,
 // and update() decrements fire_risk.
 const WATERLOGGED: u8 = 6;
+const START_HYDRATION: u8 = 2;
 
 // how many grass tiles on each side of a landing raindrop get watered.
 const SPLASH_RADIUS: u8 = 3;
@@ -77,11 +81,11 @@ type Canvas = Vec<Vec<CanvasCell>>;
 
 //type Sprite = Vec<Vec<CanvasCell>>;
 
-#[derive(Debug, Clone, PartialEq)]   // Copy removed — Vec is not Copy
+#[derive(Debug, Clone, PartialEq)]
 struct Sprite {
     data: Vec<Vec<CanvasCell>>,
-    shift_up: usize,     // how many rows to shift the sprite UP
-    shift_left: usize,   // how many columns to shift the sprite LEFT
+    shift_up: usize,
+    shift_left: usize,
 }
 
 impl Sprite{
@@ -274,8 +278,8 @@ impl Cloud {
 
 impl Empty {
     fn get_sprite(&self) -> Sprite {
-        //string_to_sprite(r#" .bk "#)
-        string_to_sprite(r#""#, 0, 0) // empty string has effect of making draw() do no-op.
+        // empty string has effect of making draw() do no-op.
+        string_to_sprite(r#""#, 0, 0) 
     }
 
     fn update(&mut self) {
@@ -321,7 +325,8 @@ impl Grass {
                 "#, 0, 0),
                 _ => string_to_sprite(r#" "#, 0, 0),
             },
-            1..=2 => string_to_sprite(r#"
+            //1..=2 => string_to_sprite(r#"
+            1 => string_to_sprite(r#"
                 vyk•
                 "yk
             "#, 0, 0),
@@ -680,7 +685,6 @@ impl SymbolPool {
     }
 
     pub fn put(&mut self, c: char) {
-        // Only the starting symbol is returned to the pool of available starts
         if self.groups.contains_key(&c) && !self.available_starts.contains(&c) {
             self.available_starts.push(c);
         }
@@ -694,12 +698,17 @@ impl SymbolPool {
         !self.available_starts.is_empty()
     }
 
-    pub fn exists_in_available_starts(&self, c: char) -> bool {
-        self.available_starts.contains(&c)
+    pub fn symbol_exists(&self, c: char) -> bool {
+        self.groups.contains_key(&c)
     }
 }
 
 struct Game {
+    chars_per_min: u64,
+    game_length_sec: u64,
+    letter_multiple: u64,
+    symbol_multiple: u64,
+
     game_state: GameState,
     ticks: u64,
     out: Box<dyn Write>,
@@ -716,6 +725,8 @@ struct Game {
     key_hit: u64,
     key_miss: u64,
     bad_press: bool,
+    letters_printed: u64,
+    symbols_printed: u64,
     rng: StdRng,
     word_pool: WordPool,
     symbol_pool: SymbolPool,
@@ -723,8 +734,16 @@ struct Game {
 }
 
 impl Game{
-    fn new(m: usize, n: usize, out: Box<dyn Write>, word_list: Vec<String>, symbol_list: Vec<char>) -> Self{
+    fn new(
+        m: usize, n: usize, out: Box<dyn Write>, word_list: Vec<String>, symbol_list: Vec<char>,
+        chars_per_minute: u64, game_length_sec: u64, alphabet_multiple: u64, symbol_multiple: u64,
+    ) -> Self{
         Game {
+            chars_per_min: chars_per_minute,
+            game_length_sec: game_length_sec,
+            letter_multiple: alphabet_multiple,
+            symbol_multiple: symbol_multiple,
+
             game_state: GameState::Play,
             ticks: 0,
             out,
@@ -742,6 +761,8 @@ impl Game{
             key_hit: 0,
             key_miss: 0,
             bad_press: false,
+            letters_printed: 0,
+            symbols_printed: 0,
             rng: SeedableRng::seed_from_u64(8),
             word_pool: WordPool::new(word_list),
             symbol_pool: SymbolPool::new(symbol_list, MIN_SYMBOLS_LEN, MAX_SYMBOLS_LEN),
@@ -768,7 +789,7 @@ impl Game{
         }
     }
 
-    fn place_cloud(&mut self, use_symbols:bool){
+    fn place_cloud(&mut self, use_symbols:bool) -> u64 {
 
         // BUG: do not use modulo here. place_cloud() is only called for certain moduli.
         //if self.ticks % 6 == 5 {
@@ -777,7 +798,7 @@ impl Game{
         if use_symbols {
             // add some symbols
             //self.debug_vec.push(format!("adding symbols"));
-            if !self.symbol_pool.has_available(){ return; }
+            if !self.symbol_pool.has_available(){ return 0; }
             //let word = self.symbol_pool.get(&mut self.rng).unwrap_or("error".to_string());
             word = self.symbol_pool.get(&mut self.rng).unwrap_or("error".to_string());
         }
@@ -786,7 +807,7 @@ impl Game{
 
             // this is probably not idiomatic.
             // but i don't want to bury the whole function in an if statement.
-            if !self.word_pool.has_available(){ return; }
+            if !self.word_pool.has_available(){ return 0; }
             //let word = self.word_pool.get(&mut self.rng).unwrap_or("error".to_string());
             word = self.word_pool.get(&mut self.rng).unwrap_or("error".to_string());
         }
@@ -795,9 +816,9 @@ impl Game{
 
         //if let Some(word) = self.word_pool.get(&mut self.rng){ }
 
-        // no clouds first row. no clouds last 4 rows.
+        // no clouds first row. no clouds last 8 rows.
         let cloud_min: usize = n;
-        let cloud_max: usize = (m*n) - (4*n);
+        let cloud_max: usize = (m*n) - (8*n);
 
         let cloud_search_begin: usize = self.rng.random_range(cloud_min..cloud_max);
         let mut cloud_search_cur = cloud_search_begin;
@@ -921,6 +942,7 @@ impl Game{
                 break; 
             }
         }
+        word.len() as u64
     }
 
     fn update(&mut self){
@@ -950,10 +972,32 @@ impl Game{
         // placing a raindrop or a cloud will both update a cell.
         for row in &mut self.update_applied { row.fill(false); }
 
-        if self.ticks % 4 == 0{ self.place_raindrop(); }
+        if self.ticks % 2 == 0{ self.place_raindrop(); }
 
-        if self.ticks % 12 == 0{ self.place_cloud(true);}
-        else if self.ticks % 2 == 0{ self.place_cloud(false); }
+        //if self.ticks % 12 == 0{ self.place_cloud(true);}
+        //else if self.ticks % 2 == 0{ self.place_cloud(false); }
+
+        // determine whether to add a cloud.
+
+        let expected_chars = self.chars_per_min * self.ticks * MS_PER_TICK / 60000;
+        let curr_chars = self.letters_printed + self.symbols_printed;
+        if curr_chars < expected_chars {
+            // determine whether to place letters or symbols.
+            //self.letters_printed += self.place_cloud(false);
+
+            let current_letter_to_symbol_ratio = 
+                self.letters_printed as f64 / (self.symbols_printed as f64 + 0.001);
+            let desired_letter_to_symbol_ratio = 
+                self.letter_multiple as f64 / (self.symbol_multiple as f64 + 0.001);
+            self.debug_vec.push(format!("{desired_letter_to_symbol_ratio}"));
+
+            if current_letter_to_symbol_ratio < desired_letter_to_symbol_ratio {
+                self.letters_printed += self.place_cloud(false);
+            }
+            else{
+                self.symbols_printed += self.place_cloud(true);
+            }
+        }
 
         let (m, n) = (self.grid.len(), self.grid[0].len());
         for i in 0..m {
@@ -1068,7 +1112,7 @@ impl Game{
                     }
                     GridCell::Ck(ck) => {
                         let mut tmp = ck.clone();
-                        tmp.ms_remaining = (GAME_LENGTH_SEC * 1000) - (self.ticks * MS_PER_TICK);
+                        tmp.ms_remaining = (self.game_length_sec * 1000) - (self.ticks * MS_PER_TICK);
                         self.grid[i][j] = GridCell::Ck(tmp);
                     }
                     GridCell::Sc(sc) => {
@@ -1096,7 +1140,7 @@ impl Game{
         }
 
         // check condition for game won.
-        if self.ticks * MS_PER_TICK >= (GAME_LENGTH_SEC * 1000){
+        if self.ticks * MS_PER_TICK >= (self.game_length_sec * 1000){
             self.game_state = GameState::GameWon
         }
     }
@@ -1259,7 +1303,7 @@ impl Game{
                         cd.delete = true;
                         self.active_cloud_coords = (0, 0);
                         if let Some(ch) = cd.word.chars().next(){
-                            if self.symbol_pool.exists_in_available_starts(ch){
+                            if self.symbol_pool.symbol_exists(ch){
                                 self.symbol_pool.put(ch);
                             }
                             else{
@@ -1319,7 +1363,7 @@ impl Game{
         let (m, n) = (self.grid.len(), self.grid[0].len());
         for j in 0..n {
             self.grid[m-2][j] = GridCell::Gs(Grass{
-                anim_state:self.rng.random_range(0..3), fire_resist:4, delete:false});
+                anim_state:self.rng.random_range(0..3), fire_resist:START_HYDRATION, delete:false});
             //let idx = rng.random_range(0..self.available_starts.len());
             //self.grid[m-2][j] = GridCell::Gs(Grass{r:0, c:0, anim_state:0, fire_resist:1, delete:false});
         }
@@ -1429,13 +1473,15 @@ impl Game{
 
 fn main() -> Result<()> {
     // TODO: parse command line args.
+    let args = parse_args();
     
-    let rows = MIN_ROWS;
-    let cols = MIN_COLS;
     //let word_list = read_words_from_disk();
     let word_list = word_list::get_word_list();
     let symbol_list = symbol_list::get_symbol_list();
-    let mut game = Game::new(rows, cols, Box::new(io::stdout()), word_list, symbol_list);
+    let mut game = Game::new(
+        GAME_ROWS, GAME_COLS, Box::new(io::stdout()), word_list, symbol_list,
+        args.chars_per_min, args.game_length_sec, args.letter_multiple, args.symbol_multiple,
+    );
     game.run()?;
     Ok(())
 }

@@ -25,5 +25,5 @@ Go to the [latest release](https://github.com/YOURUSERNAME/raintype/releases/lat
 
 ### Option 2: With Rust (recommended)
 
-```bash
 cargo install --git https://github.com/YOURUSERNAME/raintype.git
+```
