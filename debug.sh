@@ -18,7 +18,10 @@
 echo "foo"
 
 #RUSTFLAGS="-Awarnings" cargo build --bin qwench && alacritty -e bash -c "./target/debug/qwench; read -n 1 -s -r -p \"Press any key to continue...\""
-RUSTFLAGS="-Awarnings" cargo build --bin qwench && alacritty -e bash -c "./target/debug/qwench"
 
+#RUSTFLAGS="-Awarnings" cargo build --bin qwench && alacritty -e bash -c "./target/debug/qwench"
 
+#RUSTFLAGS="-Awarnings" cargo build --bin qwench && alacritty -e bash -c "./target/debug/qwench -g 180 -c 1200; read -n 1 -s -r -p \"Press any key to continue...\""
+
+RUSTFLAGS="-Awarnings" cargo build --bin qwench && alacritty -e bash -c "./target/debug/qwench; read -n 1 -s -r -p \"Press any key to continue...\""
 

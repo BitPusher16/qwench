@@ -43,7 +43,11 @@ const WORD_LEN_W_BUFFER: usize = MAX_WORD_LEN + WORD_LEN_BUFFER;
 const MAX_SYMBOLS_LEN: usize = 6;
 const MIN_SYMBOLS_LEN: usize = 4;
 
+const GAME_OVER_I: usize = 20;
+const GAME_OVER_J: usize = 64;
+
 const MS_PER_TICK: u64 = 250;
+//const MS_PER_TICK: u64 = 25;
 //const GAME_LENGTH_SEC: u64 = 2 * 60;
 
 // at or above hydration level WATERLOGGED,
@@ -739,7 +743,8 @@ impl Game{
         chars_per_minute: u64, game_length_sec: u64, alphabet_multiple: u64, symbol_multiple: u64,
     ) -> Self{
         Game {
-            chars_per_min: chars_per_minute,
+            //chars_per_min: chars_per_minute,
+            chars_per_min: 2000,
             game_length_sec: game_length_sec,
             letter_multiple: alphabet_multiple,
             symbol_multiple: symbol_multiple,
@@ -818,7 +823,8 @@ impl Game{
 
         // no clouds first row. no clouds last 8 rows.
         let cloud_min: usize = n;
-        let cloud_max: usize = (m*n) - (8*n);
+        //let cloud_max: usize = (m*n) - (8*n);
+        let cloud_max: usize = (m*n) - (24*n);
 
         let cloud_search_begin: usize = self.rng.random_range(cloud_min..cloud_max);
         let mut cloud_search_cur = cloud_search_begin;
@@ -956,12 +962,12 @@ impl Game{
     }
 
     fn update_game_lost(&mut self){
-        self.grid[20][64] = GridCell::Gm(GameOverMessage{
+        self.grid[GAME_OVER_I][GAME_OVER_J] = GridCell::Gm(GameOverMessage{
             anim_state:0, idx:0, word:String::from("Game_Lost"), delete:false});
     }
 
     fn update_game_won(&mut self){
-        self.grid[20][64] = GridCell::Gm(GameOverMessage{
+        self.grid[GAME_OVER_I][GAME_OVER_J] = GridCell::Gm(GameOverMessage{
             anim_state:0, idx:0, word:String::from("Game_Won"), delete:false});
     }
 
@@ -1154,13 +1160,17 @@ impl Game{
         let (m, n) = (self.grid.len(), self.grid[0].len());
         for i in 0..m {
             for j in 0..n {
-                //if let Some(elt) = self.grid[i][j] { 
-                //    let sprite = elt.get_sprite();
-                //    draw_onto(&mut self.canvas, sprite, i, j);
-                //}
                 let sprite = self.grid[i][j].get_sprite();
                 draw_onto(&mut self.canvas,& sprite, i, j);
             }
+        }
+
+        if (
+            matches!(self.game_state, GameState::GameWon) 
+            || matches!(self.game_state, GameState::GameLost)
+        ){
+            let sprite = self.grid[GAME_OVER_I][GAME_OVER_J].get_sprite();
+            draw_onto(&mut self.canvas,& sprite, GAME_OVER_I, GAME_OVER_J);
         }
 
         let (curr_cols, curr_rows) = size()?;
