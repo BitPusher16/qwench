@@ -743,8 +743,7 @@ impl Game{
         chars_per_minute: u64, game_length_sec: u64, alphabet_multiple: u64, symbol_multiple: u64,
     ) -> Self{
         Game {
-            //chars_per_min: chars_per_minute,
-            chars_per_min: 2000,
+            chars_per_min: chars_per_minute,
             game_length_sec: game_length_sec,
             letter_multiple: alphabet_multiple,
             symbol_multiple: symbol_multiple,
@@ -768,7 +767,8 @@ impl Game{
             bad_press: false,
             letters_printed: 0,
             symbols_printed: 0,
-            rng: SeedableRng::seed_from_u64(8),
+            //rng: SeedableRng::seed_from_u64(8),
+            rng: SeedableRng::seed_from_u64(rand::random()),
             word_pool: WordPool::new(word_list),
             symbol_pool: SymbolPool::new(symbol_list, MIN_SYMBOLS_LEN, MAX_SYMBOLS_LEN),
             debug_vec: Vec::new()
@@ -812,8 +812,7 @@ impl Game{
 
         // no clouds first row. no clouds last 8 rows.
         let cloud_min: usize = n;
-        //let cloud_max: usize = (m*n) - (8*n);
-        let cloud_max: usize = (m*n) - (32*n);
+        let cloud_max: usize = (m*n) - (8*n);
 
         let cloud_search_begin: usize = self.rng.random_range(cloud_min..cloud_max);
         let mut cloud_search_cur = cloud_search_begin;
@@ -945,7 +944,7 @@ impl Game{
             cloud_search_cur %= cloud_max;
             cloud_search_cur = max(cloud_search_cur, cloud_min);
             if cloud_search_cur == cloud_search_begin{ 
-                self.debug_vec.push("no space for cloud".to_string());
+                //self.debug_vec.push("no space for cloud".to_string());
                 break; 
             }
         }
@@ -1236,8 +1235,8 @@ impl Game{
                     format!("{:?}", item)
                 }
             }) .collect::<Vec<_>>() .join(", ");
-            let formatted = format!("\r[{}]", inner);
-            queue!(self.out, Print(formatted))?;
+            let formatted_debug_info = format!("\r[{}]", inner);
+            //queue!(self.out, Print(formatted_debug_info))?;
 
             queue!(self.out, EndSynchronizedUpdate)?;
             self.out.flush()?;

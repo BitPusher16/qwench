@@ -11,15 +11,15 @@ impl CommandLineArgs {
     const CHARS_PER_MIN_MIN: u64 = 100;
     const CHARS_PER_MIN_MAX: u64 = 2000;
 
-    const GAME_LENGTH_SEC_DEF: u64 = 3 * 60;
+    const GAME_LENGTH_SEC_DEF: u64 = 4 * 60;
     const GAME_LENGTH_SEC_MIN: u64 = 30;
     const GAME_LENGTH_SEC_MAX: u64 = 20 * 60;
 
-    const LETTER_MULTIPLE_DEF: u64 = 8;
+    const LETTER_MULTIPLE_DEF: u64 = 4;
     const LETTER_MULTIPLE_MIN: u64 = 0;
     const LETTER_MULTIPLE_MAX: u64 = 20;
 
-    const SYMBOL_MULTIPLE_DEF: u64 = 8;
+    const SYMBOL_MULTIPLE_DEF: u64 = 1;
     const SYMBOL_MULTIPLE_MIN: u64 = 0;
     const SYMBOL_MULTIPLE_MAX: u64 = 20;
 }
