@@ -38,7 +38,7 @@ const GAME_ROWS: usize = 48;
 const MAX_WORD_LEN: usize = 10;
 const MIN_WORD_LEN: usize = 6;
 const WORD_LEN_BUFFER: usize = 2;
-const WORD_LEN_W_BUFFER: usize = MAX_WORD_LEN + WORD_LEN_BUFFER;
+//const WORD_LEN_W_BUFFER: usize = MAX_WORD_LEN + WORD_LEN_BUFFER;
 
 const MAX_SYMBOLS_LEN: usize = 6;
 const MIN_SYMBOLS_LEN: usize = 4;
@@ -796,22 +796,13 @@ impl Game{
 
     fn place_cloud(&mut self, use_symbols:bool) -> u64 {
 
-        // BUG: do not use modulo here. place_cloud() is only called for certain moduli.
-        //if self.ticks % 6 == 5 {
-
         let mut word:String = "".to_string();
         if use_symbols {
-            // add some symbols
-            //self.debug_vec.push(format!("adding symbols"));
             if !self.symbol_pool.has_available(){ return 0; }
             //let word = self.symbol_pool.get(&mut self.rng).unwrap_or("error".to_string());
             word = self.symbol_pool.get(&mut self.rng).unwrap_or("error".to_string());
         }
         else{
-            // add a word.
-
-            // this is probably not idiomatic.
-            // but i don't want to bury the whole function in an if statement.
             if !self.word_pool.has_available(){ return 0; }
             //let word = self.word_pool.get(&mut self.rng).unwrap_or("error".to_string());
             word = self.word_pool.get(&mut self.rng).unwrap_or("error".to_string());
@@ -819,12 +810,10 @@ impl Game{
 
         let (m, n) = (self.grid.len(), self.grid[0].len());
 
-        //if let Some(word) = self.word_pool.get(&mut self.rng){ }
-
         // no clouds first row. no clouds last 8 rows.
         let cloud_min: usize = n;
         //let cloud_max: usize = (m*n) - (8*n);
-        let cloud_max: usize = (m*n) - (24*n);
+        let cloud_max: usize = (m*n) - (32*n);
 
         let cloud_search_begin: usize = self.rng.random_range(cloud_min..cloud_max);
         let mut cloud_search_cur = cloud_search_begin;
@@ -838,9 +827,10 @@ impl Game{
         loop{
             let (i, j) = (cloud_search_rev / n, cloud_search_rev % n);
 
-            // search reached beginning of row, it is empty.
+            // search reached beginning of row and it is empty.
             if( 
-                (cloud_search_rev % n) == 0
+                //(cloud_search_rev % n) == 0
+                j == 0
                 && matches!(self.grid[i][j], GridCell::Em(_))
             ){ 
                 //self.debug_vec.push(format!("reached row beg at {i},{j}").to_string());
@@ -859,14 +849,15 @@ impl Game{
             // encountered raindrop.
             // assume that raindrop can not exist in area covered by any cloud.
             // safe to stop backward search.
-            if let GridCell::Rd(rd) = &self.grid[i][j]{
+            //if let GridCell::Rd(rd) = &self.grid[i][j]{
+            if matches!(self.grid[i][j], GridCell::Rd(_)){
                 //self.debug_vec.push(format!("raindrop {i},{j}").to_string());
                 break;
             }
 
-            // searched back far enough to account for max possible word, is empty.
+            // searched back far enough to account for max possible word.
             if( 
-                cloud_search_cur - cloud_search_rev == WORD_LEN_W_BUFFER + 1
+                cloud_search_cur - cloud_search_rev == MAX_WORD_LEN + WORD_LEN_BUFFER
             ){ 
                 //self.debug_vec.push(format!("enough {i},{j}").to_string());
                 break;
@@ -875,14 +866,21 @@ impl Game{
             // encountered cloud;
             if let GridCell::Cd(cd) = &self.grid[i][j]{
                 //self.debug_vec.push(format!("hit cloud at {i},{j}").to_string());
+                //cloud_search_cur = max(cloud_search_cur, cloud_search_rev + cd.word.len() + WORD_LEN_BUFFER);
+                //cloud_search_cur += MAX_WORD_LEN + WORD_LEN_BUFFER;
+
+                //cloud_search_cur = cloud_search_rev + cd.word.len() + WORD_LEN_BUFFER;
                 cloud_search_cur = max(cloud_search_cur, cloud_search_rev + cd.word.len() + WORD_LEN_BUFFER);
+
+                //let (u,v) = (cloud_search_begin / n, cloud_search_begin % n);
+                //let (p,q) = (cloud_search_cur / n, cloud_search_cur % n);
+                //self.debug_vec.push(format!("started {u},{v} bumped to {p},{q}").to_string());
+
                 break;
             }
 
             cloud_search_rev -= 1;
         }
-
-
 
         'iter_i_j: loop{
             let (i, j) = (cloud_search_cur / n, cloud_search_cur % n);
@@ -893,15 +891,17 @@ impl Game{
                 // if obstacle encountered (wall, non-empty item),
                 // bump index up to the location of obstacle.
 
+                // BUG? setting k = j+1 means we never look for a cloud in j?
                 let mut k = j + 1;
+                //let mut k = j;
                 'iter_k: loop {
 
                     if (k - j) == word.len() + WORD_LEN_BUFFER {
                         // we have space for the word.
                         // place word now? or better after loop?
 
-                        self.grid[i][j] = GridCell::Cd(Cloud{anim_state:0, 
-                            word:word.clone(), idx:0, delete:false});
+                        self.grid[i][j] = GridCell::Cd(Cloud{
+                            anim_state:0, word:word.clone(), idx:0, delete:false});
                         if let Some(ch) = word.chars().next(){
                             self.first_char_to_grid_coords.insert(ch, (i, j));
                         }
@@ -925,9 +925,7 @@ impl Game{
 
                     if let GridCell::Cd(cd) = &self.grid[i][k]{
                         // decrement to account for increment that comes after iter_k.
-                        // but add 1 so words don't come immediately after each other?
-                        cloud_search_cur += cd.word.len() - 1;
-                        cloud_search_cur += 1;
+                        cloud_search_cur += cd.word.len() + WORD_LEN_BUFFER - 1;
                     }
 
                     if !matches!(self.grid[i][k], GridCell::Em(_)) {
@@ -938,6 +936,9 @@ impl Game{
 
                     k += 1;
                 }
+            }
+            if let GridCell::Cd(cd) = &self.grid[i][j]{
+                cloud_search_cur += cd.word.len() + WORD_LEN_BUFFER;
             }
 
             cloud_search_cur += 1;
@@ -990,6 +991,11 @@ impl Game{
         if curr_chars < expected_chars {
             // determine whether to place letters or symbols.
             //self.letters_printed += self.place_cloud(false);
+
+
+            // NOTE: to prevent division by zero errors, we add a small float to denominators.
+            // this sometimes causes symbol clouds to appear even when symbol ratio set to 0.
+            // acceptable bug for now.
 
             let current_letter_to_symbol_ratio = 
                 self.letters_printed as f64 / (self.symbols_printed as f64 + 0.001);
